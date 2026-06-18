@@ -134,39 +134,6 @@ header {
   transition: color 0.3s;
 }
 
-/* ── Mode selector ── */
-.mode-bar {
-  padding: 12px 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex; gap: 6px;
-  overflow-x: auto; scrollbar-width: none;
-  transition: background 0.3s, border-color 0.3s;
-}
-.mode-bar::-webkit-scrollbar { display: none; }
-
-.mode-btn {
-  flex-shrink: 0;
-  padding: 7px 14px;
-  background: transparent;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-pill);
-  font-family: var(--font);
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.18s;
-  white-space: nowrap;
-  letter-spacing: 0.01em;
-}
-.mode-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
-.mode-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
-}
-
 /* ── Lane wrap ── */
 .lane-wrap {
   max-width: 1060px; margin: 0 auto;
@@ -687,6 +654,56 @@ header {
 .rules-row span:first-child { font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
 .rules-row span:last-child  { text-align: right; }
 
+/* ── Settings popup ── */
+.settings-group { display: flex; flex-direction: column; gap: 10px; }
+
+.settings-group-label {
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-tertiary); transition: color 0.3s;
+}
+
+.settings-group-desc {
+  font-size: 0.75rem; color: var(--text-tertiary);
+  margin-top: -6px; transition: color 0.3s;
+}
+
+.settings-options { display: flex; flex-direction: column; gap: 6px; }
+
+.settings-opt {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 2px; width: 100%;
+  padding: 11px 14px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.settings-opt:hover { border-color: var(--border-2); background: var(--surface-3); }
+.settings-opt.active {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.settings-opt-name {
+  font-family: var(--font); font-size: 0.82rem; font-weight: 600;
+  color: var(--text-primary); letter-spacing: -0.01em;
+  transition: color 0.3s;
+}
+.settings-opt.active .settings-opt-name { color: var(--accent); }
+[data-theme="light"] .settings-opt.active .settings-opt-name { color: var(--text-primary); }
+
+.settings-opt-desc {
+  font-family: var(--font); font-size: 0.7rem; font-weight: 400;
+  color: var(--text-tertiary); transition: color 0.3s;
+}
+
+.settings-divider {
+  height: 1px; background: var(--border); transition: background 0.3s;
+}
+
+/* Active settings indicator in header button */
+.help-btn.has-custom { border-color: var(--text-secondary); color: var(--text-primary); }
+
 /* ── Save modal ── */
 .save-input-wrap {
   background: var(--surface-2); border: 1px solid var(--border-2);
@@ -847,22 +864,18 @@ header {
     <span class="logo">🎳 Striker</span>
   </div>
   <div class="header-actions">
+    <button class="help-btn" id="settingsBtn">Game Settings</button>
     <button class="help-btn" id="historyBtn">History</button>
     <button class="help-btn" id="helpBtn">How to score</button>
   </div>
 </header>
-
-<div class="mode-bar" id="modeBar">
-  <button class="mode-btn active" data-mode="frame">By Frame</button>
-  <button class="mode-btn" data-mode="roll">By Roll</button>
-  <button class="mode-btn" data-mode="twolane">Pro / Two Lane</button>
-</div>
 
 <div class="lane-wrap" id="lane"></div>
 
 <div class="bottom-controls">
   <button class="add-player-btn" id="addPlayerBtn">+ Add Player</button>
   <div class="reset-area">
+    <button class="reset-btn" id="endGameBtn" style="display:none">End Game</button>
     <button class="reset-btn" id="resetBtn">New Game</button>
     <div class="reset-confirm" id="resetConfirm">
       <span>Reset all scores?</span>
@@ -882,6 +895,55 @@ header {
     </div>
     <div class="pin-buttons" id="pinButtons"></div>
     <button class="popup-close" id="popupCloseBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- Settings popup -->
+<div class="rules-overlay" id="settingsOverlay">
+  <div class="rules-modal" style="max-width:380px">
+    <div class="rules-header">
+      <span class="rules-title">Game Settings</span>
+      <button class="rules-close" id="settingsClose">✕</button>
+    </div>
+    <div class="rules-body" style="gap:24px;padding:20px">
+
+      <div class="settings-group">
+        <div class="settings-group-label">Game Mode</div>
+        <div class="settings-group-desc">How many frames are played</div>
+        <div class="settings-options">
+          <button class="settings-opt active" data-game="normal">
+            <span class="settings-opt-name">Normal</span>
+            <span class="settings-opt-desc">Standard 10-frame game</span>
+          </button>
+          <button class="settings-opt" data-game="unlimited">
+            <span class="settings-opt-name">Unlimited</span>
+            <span class="settings-opt-desc">Endless frames — practice or extended play</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <div class="settings-group">
+        <div class="settings-group-label">Turn Order</div>
+        <div class="settings-group-desc">How players rotate between rolls</div>
+        <div class="settings-options">
+          <button class="settings-opt active" data-order="frame">
+            <span class="settings-opt-name">By Frame</span>
+            <span class="settings-opt-desc">Finish your frame, then next player</span>
+          </button>
+          <button class="settings-opt" data-order="roll">
+            <span class="settings-opt-name">By Roll</span>
+            <span class="settings-opt-desc">Rotate after every single roll</span>
+          </button>
+          <button class="settings-opt" data-order="twolane">
+            <span class="settings-opt-name">Pro / Two Lane</span>
+            <span class="settings-opt-desc">2 frames per turn — tournament style</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -1031,39 +1093,65 @@ function playerColor(pidx) {
 // ════════════════════════════════════════════════════
 let players    = [];
 let activeCell = null;
-let seqMode    = 'frame';
+let gameMode   = 'normal';   // 'normal' | 'unlimited'
+let orderMode  = 'frame';    // 'frame' | 'roll' | 'twolane'
 
 function createPlayer(name) {
   return { id:'p'+Date.now()+Math.floor(Math.random()*1e6), name, rolls:Array.from({length:10},()=>[]) };
 }
 
+function isUnlimited() { return gameMode === 'unlimited'; }
+
+// Ensure player has at least N frames allocated
+function ensureFrames(p, n) {
+  while (p.rolls.length < n) p.rolls.push([]);
+}
+
+function frameCount(p) { return p.rolls.length; }
+
+// In unlimited mode the "last frame" is always the last allocated frame
+function lastFrameIdx(p) { return p.rolls.length - 1; }
+
 // ════════════════════════════════════════════════════
 //  Scoring
 // ════════════════════════════════════════════════════
-function isStrike(p,f){ return p.rolls[f][0]===10; }
-function isSpare(p,f){ const r=p.rolls[f]; return r.length>=2&&r[0]!==10&&r[0]+r[1]===10; }
-function flatRolls(p){ const f2=[]; for(let f=0;f<10;f++) p.rolls[f].forEach(v=>f2.push(v)); return f2; }
+function isStrike(p,f){ return p.rolls[f] && p.rolls[f][0]===10; }
+function isSpare(p,f){ const r=p.rolls[f]; return r && r.length>=2&&r[0]!==10&&r[0]+r[1]===10; }
+function flatRolls(p){ const f2=[]; for(let f=0;f<p.rolls.length;f++) p.rolls[f].forEach(v=>f2.push(v)); return f2; }
+
 function frameScore(p,f){
+  const total = p.rolls.length;
   const flat=flatRolls(p); let idx=0;
   for(let i=0;i<f;i++) idx+=isStrike(p,i)?1:p.rolls[i].length;
-  if(f===9) return p.rolls[9].length?p.rolls[9].reduce((a,b)=>a+b,0):null;
-  if(!p.rolls[f].length) return null;
+
+  // Last frame of a standard game (frame index 9) — special 10th frame rules
+  if(!isUnlimited() && f===9){
+    return p.rolls[9].length ? p.rolls[9].reduce((a,b)=>a+b,0) : null;
+  }
+
+  // In unlimited mode — every frame is a normal 2-roll frame, no bonus frames
+  if(!p.rolls[f] || !p.rolls[f].length) return null;
   if(isStrike(p,f)){ const b1=flat[idx+1]??null,b2=flat[idx+2]??null; return(b1===null||b2===null)?null:10+b1+b2; }
   if(isSpare(p,f)){ const b=flat[idx+2]??null; return b===null?null:10+b; }
   if(p.rolls[f].length<2) return null;
   return p.rolls[f][0]+p.rolls[f][1];
 }
+
 function cumulativeScores(p){
   const s=[]; let t=0;
-  for(let f=0;f<10;f++){ const sc=frameScore(p,f); if(sc===null)s.push(null); else{t+=sc;s.push(t);} }
+  for(let f=0;f<p.rolls.length;f++){
+    const sc=frameScore(p,f);
+    if(sc===null)s.push(null); else{t+=sc;s.push(t);}
+  }
   return s;
 }
-function totalScore(p){ const cs=cumulativeScores(p); for(let i=9;i>=0;i--) if(cs[i]!==null)return cs[i]; return 0; }
+function totalScore(p){ const cs=cumulativeScores(p); for(let i=cs.length-1;i>=0;i--) if(cs[i]!==null) return cs[i]; return 0; }
 
 // ════════════════════════════════════════════════════
 //  Max possible
 // ════════════════════════════════════════════════════
 function maxPossibleScore(p){
+  if(isUnlimited()) return null; // no meaningful max in unlimited
   const sim=p.rolls.map(r=>[...r]);
   for(let f=0;f<9;f++){
     if(sim[f].length===0)sim[f]=[10];
@@ -1093,8 +1181,16 @@ function maxPossibleScore(p){
 //  Legality
 // ════════════════════════════════════════════════════
 function validPins(p,f){
-  const r=p.rolls[f];
-  if(f<9){ if(r.length===0)return range(0,10); if(r.length===1)return r[0]===10?[]:range(0,10-r[0]); return[]; }
+  const r=p.rolls[f] || [];
+  const isLastStandard = !isUnlimited() && f===9;
+
+  if(!isLastStandard){
+    // Normal frame — unlimited and frames 0-8 of standard
+    if(r.length===0)return range(0,10);
+    if(r.length===1)return r[0]===10?[]:range(0,10-r[0]);
+    return[];
+  }
+  // Standard 10th frame
   if(r.length===0)return range(0,10);
   if(r.length===1)return r[0]===10?range(0,10):range(0,10-r[0]);
   if(r.length===2){
@@ -1105,15 +1201,27 @@ function validPins(p,f){
   }
   return[];
 }
+
 function range(a,b){ const a2=[]; for(let i=a;i<=b;i++)a2.push(i); return a2; }
+
 function isFrameComplete(p,f){
   const r=p.rolls[f];
-  if(f<9)return r[0]===10||r.length>=2;
+  if(!r) return false;
+  const isLastStandard = !isUnlimited() && f===9;
+  if(!isLastStandard) return r[0]===10||r.length>=2;
   const bonus=r[0]===10||(r.length>=2&&r[0]+r[1]===10);
   return bonus?r.length>=3:r.length>=2;
 }
-function isGameComplete(p){ return isFrameComplete(p,9); }
-function nextFrameIdx(p){ for(let f=0;f<10;f++) if(!isFrameComplete(p,f))return f; return null; }
+
+function isGameComplete(p){
+  if(isUnlimited()) return false; // never ends automatically
+  return isFrameComplete(p,9);
+}
+
+function nextFrameIdx(p){
+  for(let f=0;f<p.rolls.length;f++) if(!isFrameComplete(p,f))return f;
+  return null;
+}
 
 // ════════════════════════════════════════════════════
 //  Sequence
@@ -1121,43 +1229,62 @@ function nextFrameIdx(p){ for(let f=0;f<10;f++) if(!isFrameComplete(p,f))return 
 function nextTarget(fromPlayerId, fromFrameIdx){
   const fi=players.findIndex(p=>p.id===fromPlayerId);
   const fp=players[fi]; const N=players.length;
-  if(players.every(p=>isGameComplete(p)))return null;
 
-  if(seqMode==='frame'){
+  // Standard game over check
+  if(!isUnlimited() && players.every(p=>isGameComplete(p))) return null;
+
+  // Unlimited: when current frame completes, grow all players' rolls arrays
+  if(isUnlimited() && isFrameComplete(fp, fromFrameIdx)){
+    const neededFrames = fromFrameIdx + 2;
+    players.forEach(p => ensureFrames(p, neededFrames));
+    persistCurrentGame();
+  }
+
+  const modeKey = orderMode;
+
+  if(modeKey==='frame'){
     if(!isFrameComplete(fp,fromFrameIdx))return{playerId:fromPlayerId,frameIdx:fromFrameIdx};
-    for(let i=1;i<=N;i++){const np=players[(fi+i)%N];if(isGameComplete(np))continue;const nf=nextFrameIdx(np);if(nf!==null)return{playerId:np.id,frameIdx:nf};}
+    for(let i=1;i<=N;i++){const np=players[(fi+i)%N];if(!isUnlimited()&&isGameComplete(np))continue;const nf=nextFrameIdx(np);if(nf!==null)return{playerId:np.id,frameIdx:nf};}
     return null;
   }
-  if(seqMode==='roll'){
+  if(modeKey==='roll'){
     if(!isFrameComplete(fp,fromFrameIdx)&&fp.rolls[fromFrameIdx].length>0)return{playerId:fromPlayerId,frameIdx:fromFrameIdx};
-    for(let i=1;i<=N;i++){const np=players[(fi+i)%N];if(isGameComplete(np))continue;const nf=nextFrameIdx(np);if(nf!==null)return{playerId:np.id,frameIdx:nf};}
+    for(let i=1;i<=N;i++){const np=players[(fi+i)%N];if(!isUnlimited()&&isGameComplete(np))continue;const nf=nextFrameIdx(np);if(nf!==null)return{playerId:np.id,frameIdx:nf};}
     return null;
   }
-  if(seqMode==='twolane'){
+  if(modeKey==='twolane'){
     if(!isFrameComplete(fp,fromFrameIdx))return{playerId:fromPlayerId,frameIdx:fromFrameIdx};
     const cf=fp.rolls.filter((_,f)=>isFrameComplete(fp,f)).length;
     if(cf%2!==0){const nf=nextFrameIdx(fp);if(nf!==null)return{playerId:fromPlayerId,frameIdx:nf};}
-    for(let i=1;i<=N;i++){const np=players[(fi+i)%N];if(isGameComplete(np))continue;const nf=nextFrameIdx(np);if(nf!==null)return{playerId:np.id,frameIdx:nf};}
+    for(let i=1;i<=N;i++){const np=players[(fi+i)%N];if(!isUnlimited()&&isGameComplete(np))continue;const nf=nextFrameIdx(np);if(nf!==null)return{playerId:np.id,frameIdx:nf};}
     const nf=nextFrameIdx(fp);if(nf!==null)return{playerId:fromPlayerId,frameIdx:nf};
     return null;
   }
   return null;
 }
 
-function truncateToRoll(p,tf,tri){ for(let f=tf;f<10;f++){if(f===tf)p.rolls[f]=p.rolls[f].slice(0,tri);else p.rolls[f]=[];} }
+function truncateToRoll(p,tf,tri){
+  for(let f=tf;f<p.rolls.length;f++){
+    if(f===tf)p.rolls[f]=p.rolls[f].slice(0,tri);
+    else p.rolls[f]=[];
+  }
+}
 
 // ════════════════════════════════════════════════════
 //  Roll display
 // ════════════════════════════════════════════════════
 function rollDisplay(p,f){
-  const r=p.rolls[f];
-  if(f<9){
+  const r=p.rolls[f] || [];
+  const isLastStandard = !isUnlimited() && f===9;
+
+  if(!isLastStandard){
     if(r[0]===10)return[{text:'X',cls:'c-strike',wide:true}];
     const s=[];
     if(r.length>0)s.push({text:r[0]===0?'—':r[0],cls:r[0]===0?'c-gutter':'c-normal'});
     if(r.length>1){const sp=r[0]+r[1]===10;s.push({text:sp?'/':(r[1]===0?'—':r[1]),cls:sp?'c-spare':(r[1]===0?'c-gutter':'c-normal')});}
     return s;
   }
+  // 10th frame standard
   return r.map((v,i)=>{
     if(v===10)return{text:'X',cls:'c-strike'};
     if(i===1&&r[0]!==10&&r[0]+v===10)return{text:'/',cls:'c-spare'};
@@ -1176,24 +1303,29 @@ function renderAll(){
   if(activeCell){nextPid=activeCell.playerId;nextFidx=activeCell.frameIdx;}
   else if(!allDone){ for(const p of players){const nf=nextFrameIdx(p);if(nf!==null){nextPid=p.id;nextFidx=nf;break;}} }
 
+  // Show/hide End Game button
+  document.getElementById('endGameBtn').style.display = isUnlimited() ? '' : 'none';
+
   players.forEach((player,pidx)=>{
     const cumulative=cumulativeScores(player);
     const total=totalScore(player);
     const maxScore=maxPossibleScore(player);
     const isWinner=allDone&&total===Math.max(...players.map(totalScore));
     const isActiveP=nextPid===player.id;
+    const numFrames=player.rolls.length;
 
     let card=lane.querySelector(`[data-pid="${player.id}"]`);
     if(!card){card=document.createElement('div');card.dataset.pid=player.id;lane.appendChild(card);}
     card.className='player-card'+(isActiveP&&!allDone?' active-player':'');
     card.dataset.pidx=pidx;
 
-    const framesHtml=Array.from({length:10},(_,f)=>{
-      const isLast=f===9,boxes=rollDisplay(player,f),score=cumulative[f];
+    const framesHtml=Array.from({length:numFrames},(_,f)=>{
+      const isLastStandard=!isUnlimited()&&f===9;
+      const boxes=rollDisplay(player,f),score=cumulative[f];
       const isActive=activeCell&&activeCell.playerId===player.id&&activeCell.frameIdx===f;
       const isNext=isActiveP&&nextFidx===f&&!allDone;
       let slotsHtml='';
-      if(!isLast){
+      if(!isLastStandard){
         if(boxes.length===1&&boxes[0].wide){
           slotsHtml=`<div class="slot strike-only"><span class="rv ${boxes[0].cls}">${boxes[0].text}</span></div>`;
         } else {
@@ -1207,7 +1339,7 @@ function renderAll(){
           return`<div class="slot ${i===0?'r1':'r2'}">${bx?`<span class="rv ${bx.cls}">${bx.text}</span>`:''}</div>`;
         }).join('');
       }
-      return`<div class="frame ${isLast?'tenth':'reg'} ${isActive?'active':''} ${isNext&&!isActive?'next-frame':''}" data-player="${player.id}" data-frame="${f}" role="button" tabindex="0">
+      return`<div class="frame ${isLastStandard?'tenth':'reg'} ${isActive?'active':''} ${isNext&&!isActive?'next-frame':''}" data-player="${player.id}" data-frame="${f}" role="button" tabindex="0">
         <div class="frame-num">${f+1}</div>
         <div class="roll-slots">${slotsHtml}</div>
         <div class="frame-score ${score===null?'pending':''}">${score!==null?score:'·'}</div>
@@ -1215,6 +1347,12 @@ function renderAll(){
     }).join('');
 
     const pColor = playerColor(pidx);
+    const scoreHtml = isUnlimited()
+      ? `<span class="player-total" style="color:${pColor}">${total}</span>`
+      : `<span class="player-total" style="color:${pColor}">${total}</span>
+         <span class="score-sep">/</span>
+         <span class="max-score${maxScore===300?' perfect':''}">${maxScore}</span>`;
+
     card.innerHTML=`
       <div class="player-header">
         <div class="player-left">
@@ -1225,12 +1363,8 @@ function renderAll(){
         </div>
         <div class="player-right">
           <div class="score-block">
-            <div class="score-main">
-              <span class="player-total" style="color:${pColor}">${total}</span>
-              <span class="score-sep">/</span>
-              <span class="max-score${maxScore===300?' perfect':''}">${maxScore}</span>
-            </div>
-            <span class="score-label">Score / Max</span>
+            <div class="score-main">${scoreHtml}</div>
+            <span class="score-label">${isUnlimited()?'Score':'Score / Max'}</span>
           </div>
           ${players.length>1?`<button class="remove-btn" data-remove="${player.id}">✕</button>`:''}
         </div>
@@ -1302,6 +1436,13 @@ document.getElementById('addPlayerBtn').addEventListener('click',()=>{
   persistCurrentGame();
   renderAll();
 });
+// End Game button (unlimited mode)
+document.getElementById('endGameBtn').addEventListener('click',()=>{
+  const hasAnyRolls = players.some(p => p.rolls.some(f => f.length > 0));
+  if (!hasAnyRolls) { doReset(); return; }
+  openSaveModal();
+});
+
 // "New Game" now triggers save flow instead of direct confirm
 document.getElementById('resetBtn').addEventListener('click',()=>{
   const hasAnyRolls = players.some(p => p.rolls.some(f => f.length > 0));
@@ -1331,7 +1472,7 @@ function saveGame(name) {
     id: 'g' + Date.now(),
     name: name.trim() || defaultName,
     savedAt: new Date().toISOString(),
-    mode: seqMode,
+    gameMode, orderMode,
     players: players.map(p => ({ name: p.name, rolls: p.rolls.map(f => [...f]) }))
   };
   entries.unshift(entry);
@@ -1447,7 +1588,7 @@ function renderHistoryList() {
 
   list.innerHTML = entries.map(entry => {
     const winner = getWinner(entry);
-    const modeLabel = {frame:'By Frame', roll:'By Roll', twolane:'Pro / Two Lane'}[entry.mode] || entry.mode;
+    const gLabel = entry.gameMode==='unlimited'?'Unlimited':'Normal'; const oLabel = {frame:'By Frame',roll:'By Roll',twolane:'Pro / Two Lane'}[entry.orderMode||entry.mode]||'By Frame'; const modeLabel = gLabel + ' · ' + oLabel;
     return `
       <div class="history-item" data-id="${entry.id}">
         <div class="history-item-left">
@@ -1485,7 +1626,7 @@ function openDetailModal(entry) {
   document.getElementById('detailTitle').textContent = entry.name;
 
   const winnerScore = Math.max(...entry.players.map(historyTotalScore));
-  const modeLabel = {frame:'By Frame', roll:'By Roll', twolane:'Pro / Two Lane'}[entry.mode] || entry.mode;
+  const gLabel = entry.gameMode==='unlimited'?'Unlimited':'Normal'; const oLabel = {frame:'By Frame',roll:'By Roll',twolane:'Pro / Two Lane'}[entry.orderMode||entry.mode]||'By Frame'; const modeLabel = gLabel + ' · ' + oLabel;
 
   const body = document.getElementById('detailBody');
   body.innerHTML = `
@@ -1498,14 +1639,16 @@ function openDetailModal(entry) {
       const cumulative = historyCumulativeScores(p);
       const total = historyTotalScore(p);
       const isWinner = total === winnerScore;
-      const framesHtml = Array.from({length:10}, (_,f) => {
-        const isLast = f===9;
+      const numFrames = p.rolls.length;
+      const isUnlimitedGame = entry.gameMode === 'unlimited';
+      const framesHtml = Array.from({length:numFrames}, (_,f) => {
+        const isLastStandard = !isUnlimitedGame && f===9;
         const r = p.rolls[f];
         const score = cumulative[f];
         // roll display
         let slotsHtml = '';
-        const boxes = detailRollDisplay(p,f);
-        if(!isLast){
+        const boxes = detailRollDisplay(p,f,isUnlimitedGame);
+        if(!isLastStandard){
           if(boxes.length===1&&boxes[0].wide){
             slotsHtml=`<div class="slot strike-only"><span class="rv ${boxes[0].cls}">${boxes[0].text}</span></div>`;
           } else {
@@ -1519,7 +1662,7 @@ function openDetailModal(entry) {
             return`<div class="slot ${i===0?'r1':'r2'}">${bx?`<span class="rv ${bx.cls}">${bx.text}</span>`:''}</div>`;
           }).join('');
         }
-        return `<div class="detail-frame ${isLast?'tenth':''}">
+        return `<div class="detail-frame ${isLastStandard?'tenth':''}">
           <div class="frame-num">${f+1}</div>
           <div class="roll-slots">${slotsHtml}</div>
           <div class="frame-score ${score===null?'pending':''}">${score!==null?score:'·'}</div>
@@ -1538,9 +1681,10 @@ function openDetailModal(entry) {
   detailOverlay.classList.add('open');
 }
 
-function detailRollDisplay(p,f){
-  const r=p.rolls[f];
-  if(f<9){
+function detailRollDisplay(p,f,isUnlimitedGame){
+  const r=p.rolls[f] || [];
+  const isLastStandard = !isUnlimitedGame && f===9;
+  if(!isLastStandard){
     if(r[0]===10)return[{text:'X',cls:'c-strike',wide:true}];
     const s=[];
     if(r.length>0)s.push({text:r[0]===0?'—':r[0],cls:r[0]===0?'c-gutter':'c-normal'});
@@ -1566,11 +1710,42 @@ document.getElementById('detailDelete').addEventListener('click', () => {
   closeDetailModal();
   renderHistoryList();
 });
-document.getElementById('modeBar').addEventListener('click',e=>{
-  const btn=e.target.closest('.mode-btn'); if(!btn)return;
-  seqMode=btn.dataset.mode;
-  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+// ════════════════════════════════════════════════════
+//  Settings popup
+// ════════════════════════════════════════════════════
+const settingsOverlay = document.getElementById('settingsOverlay');
+
+function openSettings() {
+  syncSettingsUI();
+  settingsOverlay.classList.add('open');
+}
+function closeSettings() { settingsOverlay.classList.remove('open'); }
+
+function syncSettingsUI() {
+  document.querySelectorAll('[data-game]').forEach(b  => b.classList.toggle('active', b.dataset.game  === gameMode));
+  document.querySelectorAll('[data-order]').forEach(b => b.classList.toggle('active', b.dataset.order === orderMode));
+  // Highlight the header button if non-default settings
+  const isDefault = gameMode === 'normal' && orderMode === 'frame';
+  document.getElementById('settingsBtn').classList.toggle('has-custom', !isDefault);
+}
+
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+settingsOverlay.addEventListener('click', e => { if(e.target === settingsOverlay) closeSettings(); });
+
+settingsOverlay.addEventListener('click', e => {
+  const btn = e.target.closest('.settings-opt'); if(!btn) return;
+  if(btn.dataset.game !== undefined){
+    gameMode = btn.dataset.game;
+    if(gameMode === 'normal'){
+      players.forEach(p => { p.rolls = p.rolls.slice(0,10); while(p.rolls.length<10) p.rolls.push([]); });
+    }
+  } else if(btn.dataset.order !== undefined){
+    orderMode = btn.dataset.order;
+  }
+  syncSettingsUI();
   persistCurrentGame();
+  renderAll();
 });
 
 function removePlayer(id){
@@ -1625,7 +1800,7 @@ const CURRENT_KEY = 'striker_current';
 function persistCurrentGame() {
   try {
     localStorage.setItem(CURRENT_KEY, JSON.stringify({
-      seqMode,
+      gameMode, orderMode,
       players: players.map(p => ({ id: p.id, name: p.name, rolls: p.rolls.map(f => [...f]) }))
     }));
   } catch(e) { console.warn('Could not persist game state', e); }
@@ -1637,16 +1812,11 @@ function restoreCurrentGame() {
     if (!raw) return false;
     const state = JSON.parse(raw);
     if (!state.players || !state.players.length) return false;
-    seqMode = state.seqMode || 'frame';
-    players = state.players.map(p => ({
-      id: p.id,
-      name: p.name,
-      rolls: p.rolls.map(f => [...f])
-    }));
-    // Sync mode bar UI
-    document.querySelectorAll('.mode-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.mode === seqMode);
-    });
+    // Support old single seqMode saves
+    if(state.seqMode === 'unlimited') { gameMode = 'unlimited'; orderMode = 'frame'; }
+    else if(state.seqMode) { gameMode = 'normal'; orderMode = state.seqMode; }
+    else { gameMode = state.gameMode || 'normal'; orderMode = state.orderMode || 'frame'; }
+    players = state.players.map(p => ({ id: p.id, name: p.name, rolls: p.rolls.map(f => [...f]) }));
     document.getElementById('addPlayerBtn').style.display = '';
     return true;
   } catch(e) { return false; }
@@ -1660,6 +1830,7 @@ if (!restored) {
   players.push(createPlayer('Player 1'));
   players.push(createPlayer('Player 2'));
 }
+syncSettingsUI();
 renderAll();
 </script>
 </body>

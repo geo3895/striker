@@ -4,18 +4,37 @@ A clean, minimal bowling score calculator for the browser.
 
 ## Features
 
-- **Accurate scoring** — strikes, spares, and 10th frame bonus rolls handled correctly
-- **Unlimited players** — add as many players as needed with editable names
-- **Three game modes**
-  - *By Frame* — each player completes their frame before the next player goes
-  - *By Roll* — players rotate after every single roll
-  - *Pro / Two Lane* — 2 frames per turn, mirroring tournament-style two-lane play
-- **Editable cells** — tap any frame to correct a roll at any time
-- **Game history** — completed games are saved locally and can be browsed, reviewed, and deleted
-- **Persistent current game** — refreshing the page never loses your progress
-- **Dark and light mode** — preference is remembered between sessions
-- **How to score guide** — built-in explanation of bowling scoring rules
-- **Local clock** — live time and date adjusted to the user's device timezone
+**Scoring**
+- Accurate strike, spare, and 10th frame bonus roll calculation
+- Running cumulative score per frame
+- Max possible score tracker — updates after every roll
+
+**Players**
+- Unlimited players with editable names
+- Per-player color coding
+
+**Game Settings**
+- *Game Mode* — Normal (10 frames) or Unlimited (endless frames for practice or extended play)
+- *Turn Order* — By Frame, By Roll, or Pro / Two Lane (2 frames per turn, tournament style)
+
+**Editing**
+- Tap any frame cell to correct a roll
+- Undo last roll from within the frame popup
+
+**History**
+- Completed games are saved locally and browsable at any time
+- Each entry shows game name, date, players, mode, and winner score
+- Full scoreboard replay for any saved game
+- Delete individual entries
+
+**Persistence**
+- Current game state survives page refreshes
+- Theme preference remembered between sessions
+
+**Other**
+- Built-in scoring rules guide
+- Dark and light mode
+- Live clock adjusted to the user's device timezone
 
 ## Stack
 
