@@ -197,17 +197,7 @@ header {
 
 .player-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 
-.player-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%; flex-shrink: 0;
-  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
-}
-.player-card[data-pidx="0"] .player-dot { background: var(--p0); }
-.player-card[data-pidx="1"] .player-dot { background: var(--p1); }
-.player-card[data-pidx="2"] .player-dot { background: var(--p2); }
-.player-card[data-pidx="3"] .player-dot { background: var(--p3); }
-.player-card[data-pidx="4"] .player-dot { background: var(--p4); }
-.player-card[data-pidx="5"] .player-dot { background: var(--p5); }
+.player-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; transition: transform 0.2s var(--ease-spring); }
 .active-player .player-dot { transform: scale(1.4); }
 
 .player-name-input {
@@ -1025,6 +1015,18 @@ header {
 
 <script>
 // ════════════════════════════════════════════════════
+//  Player color palette — cycles for any number of players
+// ════════════════════════════════════════════════════
+const PLAYER_COLORS_DARK  = ['#f5f5f5','#a8a8a8','#d4b896','#96b4d4','#b4d496','#d496b4','#d4d496','#96d4c8','#c896d4','#d4a896'];
+const PLAYER_COLORS_LIGHT = ['#1a1a1a','#787878','#9c7850','#507899','#5a9050','#905070','#909050','#508070','#805090','#906050'];
+
+function playerColor(pidx) {
+  const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const palette = dark ? PLAYER_COLORS_DARK : PLAYER_COLORS_LIGHT;
+  return palette[pidx % palette.length];
+}
+
+// ════════════════════════════════════════════════════
 //  State
 // ════════════════════════════════════════════════════
 let players    = [];
@@ -1212,10 +1214,11 @@ function renderAll(){
       </div>`;
     }).join('');
 
+    const pColor = playerColor(pidx);
     card.innerHTML=`
       <div class="player-header">
         <div class="player-left">
-          <div class="player-dot"></div>
+          <div class="player-dot" style="background:${pColor}"></div>
           <input class="player-name-input" value="${esc(player.name)}" maxlength="20" placeholder="Player ${pidx+1}" oninput="renamePlayer('${player.id}',this.value)">
           ${isActiveP&&!allDone?'<span class="now-bowling-tag">Now bowling</span>':''}
           ${isWinner?'<span class="winner-tag">Winner</span>':''}
@@ -1223,7 +1226,7 @@ function renderAll(){
         <div class="player-right">
           <div class="score-block">
             <div class="score-main">
-              <span class="player-total">${total}</span>
+              <span class="player-total" style="color:${pColor}">${total}</span>
               <span class="score-sep">/</span>
               <span class="max-score${maxScore===300?' perfect':''}">${maxScore}</span>
             </div>
@@ -1272,14 +1275,18 @@ function openPopup(playerId,frameIdx){
 function recordRoll(playerId,frameIdx,pins){
   const player=players.find(p=>p.id===playerId); if(!player)return;
   if(isFrameComplete(player,frameIdx))truncateToRoll(player,frameIdx,0);
-  player.rolls[frameIdx].push(pins); closePopup();
+  player.rolls[frameIdx].push(pins);
+  persistCurrentGame();
+  closePopup();
   const target=nextTarget(playerId,frameIdx);
   if(target)setTimeout(()=>openPopup(target.playerId,target.frameIdx),130);
 }
 
 function undoLastRoll(playerId,frameIdx){
   const player=players.find(p=>p.id===playerId); if(!player||!player.rolls[frameIdx].length)return;
-  player.rolls[frameIdx].pop(); closePopup(); setTimeout(()=>openPopup(playerId,frameIdx),80);
+  player.rolls[frameIdx].pop();
+  persistCurrentGame();
+  closePopup(); setTimeout(()=>openPopup(playerId,frameIdx),80);
 }
 
 function closePopup(){ activeCell=null; document.getElementById('popupOverlay').classList.remove('open'); renderAll(); }
@@ -1291,9 +1298,9 @@ document.getElementById('popupOverlay').addEventListener('click',e=>{ if(e.targe
 document.getElementById('popupCloseBtn').addEventListener('click',closePopup);
 document.getElementById('popupUndoBtn').addEventListener('click',()=>{ if(activeCell)undoLastRoll(activeCell.playerId,activeCell.frameIdx); });
 document.getElementById('addPlayerBtn').addEventListener('click',()=>{
-  if(players.length>=6)return;
-  players.push(createPlayer('Player '+(players.length+1)));renderAll();
-  document.getElementById('addPlayerBtn').style.display=players.length>=6?'none':'';
+  players.push(createPlayer('Player '+(players.length+1)));
+  persistCurrentGame();
+  renderAll();
 });
 // "New Game" now triggers save flow instead of direct confirm
 document.getElementById('resetBtn').addEventListener('click',()=>{
@@ -1355,6 +1362,7 @@ function doReset() {
   players.forEach(p => { p.rolls = Array.from({length:10}, () => []); });
   activeCell = null;
   document.getElementById('popupOverlay').classList.remove('open');
+  persistCurrentGame();
   renderAll();
 }
 
@@ -1562,10 +1570,18 @@ document.getElementById('modeBar').addEventListener('click',e=>{
   const btn=e.target.closest('.mode-btn'); if(!btn)return;
   seqMode=btn.dataset.mode;
   document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  persistCurrentGame();
 });
 
-function removePlayer(id){ players=players.filter(p=>p.id!==id); document.getElementById('addPlayerBtn').style.display=''; renderAll(); }
-function renamePlayer(id,name){ const p=players.find(p=>p.id===id); if(p)p.name=name; }
+function removePlayer(id){
+  players=players.filter(p=>p.id!==id);
+  persistCurrentGame();
+  renderAll();
+}
+function renamePlayer(id,name){
+  const p=players.find(p=>p.id===id);
+  if(p){ p.name=name; persistCurrentGame(); }
+}
 
 // ════════════════════════════════════════════════════
 //  Rules modal
@@ -1580,26 +1596,70 @@ rulesOverlay.addEventListener('click', e => { if (e.target === rulesOverlay) rul
 // ════════════════════════════════════════════════════
 function updateClock(){
   const now=new Date();
-  document.getElementById('clockTime').textContent=now.toLocaleTimeString('en-GB',{timeZone:'Europe/Athens',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-  document.getElementById('clockDate').textContent=now.toLocaleDateString('en-GB',{timeZone:'Europe/Athens',weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('clockTime').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('clockDate').textContent=now.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'});
 }
 updateClock(); setInterval(updateClock,1000);
 
 // ════════════════════════════════════════════════════
 //  Theme toggle
 // ════════════════════════════════════════════════════
-let brightMode=false;
-document.getElementById('themeToggle').addEventListener('click',()=>{
-  brightMode=!brightMode;
-  document.documentElement.setAttribute('data-theme', brightMode?'light':'dark');
-  document.getElementById('themeLabel').textContent=brightMode?'Dark':'Light';
+const THEME_KEY = 'striker_theme';
+let brightMode = localStorage.getItem(THEME_KEY) === 'light';
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', brightMode ? 'light' : 'dark');
+  document.getElementById('themeLabel').textContent = brightMode ? 'Dark' : 'Light';
+}
+applyTheme();
+document.getElementById('themeToggle').addEventListener('click', () => {
+  brightMode = !brightMode;
+  localStorage.setItem(THEME_KEY, brightMode ? 'light' : 'dark');
+  applyTheme();
 });
 
 // ════════════════════════════════════════════════════
-//  Init
+//  Persist current game
 // ════════════════════════════════════════════════════
-players.push(createPlayer('Player 1'));
-players.push(createPlayer('Player 2'));
+const CURRENT_KEY = 'striker_current';
+
+function persistCurrentGame() {
+  try {
+    localStorage.setItem(CURRENT_KEY, JSON.stringify({
+      seqMode,
+      players: players.map(p => ({ id: p.id, name: p.name, rolls: p.rolls.map(f => [...f]) }))
+    }));
+  } catch(e) { console.warn('Could not persist game state', e); }
+}
+
+function restoreCurrentGame() {
+  try {
+    const raw = localStorage.getItem(CURRENT_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!state.players || !state.players.length) return false;
+    seqMode = state.seqMode || 'frame';
+    players = state.players.map(p => ({
+      id: p.id,
+      name: p.name,
+      rolls: p.rolls.map(f => [...f])
+    }));
+    // Sync mode bar UI
+    document.querySelectorAll('.mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === seqMode);
+    });
+    document.getElementById('addPlayerBtn').style.display = '';
+    return true;
+  } catch(e) { return false; }
+}
+
+// ════════════════════════════════════════════════════
+//  Init — restore or start fresh
+// ════════════════════════════════════════════════════
+const restored = restoreCurrentGame();
+if (!restored) {
+  players.push(createPlayer('Player 1'));
+  players.push(createPlayer('Player 2'));
+}
 renderAll();
 </script>
 </body>
