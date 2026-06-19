@@ -701,9 +701,6 @@ header {
   height: 1px; background: var(--border); transition: background 0.3s;
 }
 
-/* Active settings indicator in header button */
-.help-btn.has-custom { border-color: var(--text-secondary); color: var(--text-primary); }
-
 /* ── Save modal ── */
 .save-input-wrap {
   background: var(--surface-2); border: 1px solid var(--border-2);
@@ -1724,9 +1721,6 @@ function closeSettings() { settingsOverlay.classList.remove('open'); }
 function syncSettingsUI() {
   document.querySelectorAll('[data-game]').forEach(b  => b.classList.toggle('active', b.dataset.game  === gameMode));
   document.querySelectorAll('[data-order]').forEach(b => b.classList.toggle('active', b.dataset.order === orderMode));
-  // Highlight the header button if non-default settings
-  const isDefault = gameMode === 'normal' && orderMode === 'frame';
-  document.getElementById('settingsBtn').classList.toggle('has-custom', !isDefault);
 }
 
 document.getElementById('settingsBtn').addEventListener('click', openSettings);
