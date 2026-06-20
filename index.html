@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Striker</title>
+<meta name="description" content="A clean, minimal bowling score calculator">
+<meta name="theme-color" content="#1a1a1a" id="themeMetaColor">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Striker">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -654,6 +661,76 @@ header {
 .rules-row span:first-child { font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
 .rules-row span:last-child  { text-align: right; }
 
+/* ── Game summary ── */
+.summary-header {
+  padding: 28px 24px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.summary-winner-label {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 8px;
+  transition: color 0.3s;
+}
+
+.summary-winner-name {
+  font-size: 1.5rem; font-weight: 700;
+  letter-spacing: -0.03em; color: var(--text-primary);
+  line-height: 1; margin-bottom: 6px;
+  transition: color 0.3s;
+}
+
+.summary-winner-score {
+  font-size: 0.82rem; font-weight: 500;
+  color: var(--text-tertiary); transition: color 0.3s;
+}
+
+.summary-row {
+  display: flex; align-items: center;
+  padding: 12px 20px; gap: 14px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.3s;
+}
+.summary-row:last-child { border-bottom: none; }
+
+.summary-rank {
+  font-size: 0.7rem; font-weight: 700;
+  color: var(--text-tertiary); width: 20px;
+  flex-shrink: 0; text-align: center;
+  transition: color 0.3s;
+}
+.summary-rank.gold   { color: #c8a84b; }
+.summary-rank.silver { color: #909090; }
+.summary-rank.bronze { color: #a07040; }
+
+.summary-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+
+.summary-name {
+  flex: 1; font-size: 0.85rem; font-weight: 600;
+  color: var(--text-primary); letter-spacing: -0.01em;
+  transition: color 0.3s;
+}
+
+.summary-score {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.02em;
+  transition: color 0.3s;
+}
+
+.summary-badge {
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--accent); color: var(--bg);
+  padding: 2px 7px; border-radius: var(--radius-pill);
+}
+
 /* ── Settings popup ── */
 .settings-group { display: flex; flex-direction: column; gap: 10px; }
 
@@ -892,6 +969,23 @@ header {
     </div>
     <div class="pin-buttons" id="pinButtons"></div>
     <button class="popup-close" id="popupCloseBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- Game summary modal -->
+<div class="rules-overlay" id="summaryOverlay">
+  <div class="rules-modal" style="max-width:420px">
+    <div class="summary-header">
+      <div class="summary-winner-label">Winner</div>
+      <div class="summary-winner-name" id="summaryWinnerName"></div>
+      <div class="summary-winner-score" id="summaryWinnerScore"></div>
+    </div>
+    <div class="rules-body" style="padding:0;gap:0" id="summaryList"></div>
+    <div class="rules-body" style="padding:16px 20px 20px;gap:8px">
+      <button class="save-btn-primary" id="summarySave">Save &amp; New Game</button>
+      <button class="save-btn-secondary" id="summarySkip">New Game without saving</button>
+      <button class="save-btn-ghost" id="summaryClose">Keep reviewing</button>
+    </div>
   </div>
 </div>
 
@@ -1410,7 +1504,11 @@ function recordRoll(playerId,frameIdx,pins){
   persistCurrentGame();
   closePopup();
   const target=nextTarget(playerId,frameIdx);
-  if(target)setTimeout(()=>openPopup(target.playerId,target.frameIdx),130);
+  if(target){
+    setTimeout(()=>openPopup(target.playerId,target.frameIdx),130);
+  } else if(!isUnlimited() && players.every(p=>isGameComplete(p))){
+    setTimeout(()=>openSummary(),320);
+  }
 }
 
 function undoLastRoll(playerId,frameIdx){
@@ -1708,8 +1806,54 @@ document.getElementById('detailDelete').addEventListener('click', () => {
   renderHistoryList();
 });
 // ════════════════════════════════════════════════════
-//  Settings popup
+//  Game summary
 // ════════════════════════════════════════════════════
+const summaryOverlay = document.getElementById('summaryOverlay');
+
+function openSummary() {
+  // Sort players highest to lowest score
+  const ranked = [...players]
+    .map(p => ({ p, score: totalScore(p) }))
+    .sort((a,b) => b.score - a.score);
+
+  const winner = ranked[0];
+  document.getElementById('summaryWinnerName').textContent = winner.p.name;
+  document.getElementById('summaryWinnerScore').textContent = `${winner.score} points`;
+
+  const rankSymbols = ['🥇','🥈','🥉'];
+  const rankClasses = ['gold','silver','bronze'];
+
+  const list = document.getElementById('summaryList');
+  list.innerHTML = ranked.map(({p, score}, i) => {
+    const pidx = players.indexOf(p);
+    const color = playerColor(pidx);
+    const isWinner = i === 0;
+    return `<div class="summary-row">
+      <span class="summary-rank ${rankClasses[i] || ''}">${rankSymbols[i] || i+1}</span>
+      <div class="summary-dot" style="background:${color}"></div>
+      <span class="summary-name">${esc(p.name)}</span>
+      ${isWinner ? '<span class="summary-badge">Winner</span>' : ''}
+      <span class="summary-score">${score}</span>
+    </div>`;
+  }).join('');
+
+  summaryOverlay.classList.add('open');
+}
+
+function closeSummary() { summaryOverlay.classList.remove('open'); }
+
+document.getElementById('summaryClose').addEventListener('click', closeSummary);
+summaryOverlay.addEventListener('click', e => { if(e.target === summaryOverlay) closeSummary(); });
+
+document.getElementById('summarySave').addEventListener('click', () => {
+  closeSummary();
+  openSaveModal();
+});
+
+document.getElementById('summarySkip').addEventListener('click', () => {
+  closeSummary();
+  doReset();
+});
 const settingsOverlay = document.getElementById('settingsOverlay');
 
 function openSettings() {
@@ -1771,13 +1915,22 @@ function updateClock(){
 updateClock(); setInterval(updateClock,1000);
 
 // ════════════════════════════════════════════════════
+//  Service worker
+// ════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW failed', e));
+}
+
+// ════════════════════════════════════════════════════
 //  Theme toggle
 // ════════════════════════════════════════════════════
 const THEME_KEY = 'striker_theme';
 let brightMode = localStorage.getItem(THEME_KEY) === 'light';
 function applyTheme() {
+  const isDark = !brightMode;
   document.documentElement.setAttribute('data-theme', brightMode ? 'light' : 'dark');
   document.getElementById('themeLabel').textContent = brightMode ? 'Dark' : 'Light';
+  document.getElementById('themeMetaColor').setAttribute('content', isDark ? '#1a1a1a' : '#f8f8f8');
 }
 applyTheme();
 document.getElementById('themeToggle').addEventListener('click', () => {

@@ -1,6 +1,6 @@
 # Striker
 
-A clean, minimal bowling score calculator for the browser.
+A clean, minimal bowling score calculator for the browser. Installable as a PWA.
 
 ## Features
 
@@ -21,8 +21,12 @@ A clean, minimal bowling score calculator for the browser.
 - Tap any frame cell to correct a roll
 - Undo last roll from within the frame popup
 
+**End of game**
+- Game summary screen with winner announcement and players ranked by score
+- Save, skip, or keep reviewing options
+
 **History**
-- Completed games are saved locally and browsable at any time
+- Completed games saved locally and browsable at any time
 - Each entry shows game name, date, players, mode, and winner score
 - Full scoreboard replay for any saved game
 - Delete individual entries
@@ -35,10 +39,28 @@ A clean, minimal bowling score calculator for the browser.
 - Built-in scoring rules guide
 - Dark and light mode
 - Live clock adjusted to the user's device timezone
+- Installable as a PWA — works offline, launches from home screen
 
 ## Stack
 
 Plain HTML, CSS, and JavaScript. No framework, no build step, no dependencies.
+
+## PWA
+
+The app includes a service worker and web manifest. After the first visit it works fully offline. On Android, Chrome will prompt to install it. On iOS, use Share → Add to Home Screen.
+
+When deploying updates, bump the cache version in `sw.js` from `striker-v1` to `striker-v2` (and so on) so users receive the latest version.
+
+## Files
+
+```
+index.html      — the app
+manifest.json   — PWA manifest
+sw.js           — service worker (offline caching)
+icon-192.png    — app icon
+icon-512.png    — app icon (large)
+LICENSE         — GNU GPL v3
+```
 
 ## Data & Privacy
 
