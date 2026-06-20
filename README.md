@@ -49,18 +49,7 @@ Plain HTML, CSS, and JavaScript. No framework, no build step, no dependencies.
 
 The app includes a service worker and web manifest. After the first visit it works fully offline. On Android, Chrome will prompt to install it. On iOS, use Share → Add to Home Screen.
 
-When deploying updates, bump the cache version in `sw.js` from `striker-v1` to `striker-v2` (and so on) so users receive the latest version.
-
-## Files
-
-```
-index.html      — the app
-manifest.json   — PWA manifest
-sw.js           — service worker (offline caching)
-icon-192.png    — app icon
-icon-512.png    — app icon (large)
-LICENSE         — GNU GPL v3
-```
+When deploying updates, bump the cache version in `pwa/sw.js` from `striker-v1` to `striker-v2` (and so on) so users receive the latest version.
 
 ## Data & Privacy
 
