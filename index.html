@@ -6,10 +6,10 @@
 <title>Striker</title>
 <meta name="description" content="A clean, minimal bowling score calculator">
 <meta name="theme-color" content="#1a1a1a" id="themeMetaColor">
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" href="/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="manifest" href="/pwa/manifest.json">
+<link rel="icon" href="/icons/favicon.ico" sizes="any">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Striker">
@@ -1920,7 +1920,7 @@ updateClock(); setInterval(updateClock,1000);
 //  Service worker
 // ════════════════════════════════════════════════════
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW failed', e));
+  navigator.serviceWorker.register('/pwa/sw.js', { scope: '/' }).catch(e => console.warn('SW failed', e));
 }
 
 // ════════════════════════════════════════════════════
